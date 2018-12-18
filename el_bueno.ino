@@ -27,6 +27,7 @@ void setup()
 {
   trama[0] = 0x11;
   trama[1] = 0x09;
+  trama[2] = 0x28;
   
   //115200
    Serial.begin(115200);
@@ -75,6 +76,9 @@ void loop()
          Serial.println("");      // ... and write to the serial port
          Serial.println("");
          Serial.println("---------------");
+         int truelat;
+         int truelon;
+         int velocity;
          for (int i=0;i<12;i++){
            switch(i){
              case 0 :Serial.print("Time in UTC (HhMmSs): ");break;
@@ -91,9 +95,7 @@ void loop()
              case 11 :Serial.print("Mode: ");break;
              case 12 :Serial.print("Checksum: ");break;
            }
-           int truelat;
-           int truelon;
-           int velocity;
+
            for (int j=indices[i];j<(indices[i+1]-1);j++){
              if (i == 2){
              lat[j - indices[2]] = linea[j+1];
@@ -109,6 +111,7 @@ void loop()
              if (i == 4){
              lon[j - indices[4]] = linea[j+1];
              Serial.print(parsearLongitud(lon));
+             truelon = parsearLongitud(lon);
              }
              if (i == 6){
              velocity = atoi(&linea[j+1]);
@@ -124,29 +127,27 @@ void loop()
              Serial.print(linea[j+1]); 
              }
            }
-           truelat = 40.45;
-           truelon = 3.73;
-           velocity = 20;
-           char* buff;
-           char* buff1;
-           char* buff2;
-           //LongToHex(truelat,buff);
-           //LongToHex(truelon,buff1);
-           //LongToHex(velocity,buff2);
-           
-           trama[2] = buff;
-           trama[3] = buff1;
-           trama[4] = buff2;
            Serial.println("");
          }
+           int truelat1 = 40.45;
+           int truelon1 = 3.73;
+           int velocity1 = 150;
+           char *buff = (char*)malloc(5);
+           char *buff1 = (char*)malloc(5);
+           char *buff2 = (char*)malloc(5);
+         trama[2] = LongToHex(truelat1,buff);
+         trama[3] = LongToHex(truelon1,buff1);
+         trama[4] = LongToHex(velocity1,buff2);
+         free(buff);
+         free(buff1);
+         free(buff2);
          Serial.println("-----TRAMA-----");
          Serial.println(trama[0]);
          Serial.println(trama[1]);
          Serial.println(trama[2]);
          Serial.println(trama[3]);
          Serial.println(trama[4]);
-         Serial.println("-----TRAMA-----");
-         Serial.println("---------------");
+         Serial.println("---FIN-TRAMA---");
        }
        conta=0;                    // Reset the buffer                 
      }
@@ -206,7 +207,7 @@ float parsearLongitud(const char *longitud)
 //400KHZ 
 //0,25W
 
-void LongToHex(long int number, unsigned char *res)
+int LongToHex(long int number, unsigned char *res)
 {
     long quotient, remainder;
     int m, n;
@@ -263,4 +264,6 @@ void LongToHex(long int number, unsigned char *res)
          n++;
        } while ( (n < 6) && (tem == 48) );
     }
+    int result = atoi(res);
+    return result;
 }

@@ -1,13 +1,10 @@
 #include <SoftwareSerial.h>
-#include "Wire.h"
-#include "CMPS03.h"
-
 #include <String.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #define PMTK_SET_NMEA_OUTPUT "$PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*29"// "$PMTK220, 10000*2F" //Once every 10 s, 100 mhz
-CMPS03 cmps03;
+ 
 const int RX = 4;
 const int TX = 3;
 const int ledPin = 13;
@@ -25,22 +22,18 @@ const int ledPin = 13;
 
 
 SoftwareSerial gps(RX, TX);
-SoftwareSerial tramaSal(10,5);
-
  
 void setup()
 {
   trama[0] = 0x11;
   trama[1] = 0x09;
+  trama[2] = 0x28;
   
   //115200
    Serial.begin(115200);
   
      gps.begin(9600);
-     tramaSal.begin(9600);
-     gps.listen();
      gps.println(PMTK_SET_NMEA_OUTPUT);
-     Wire.begin();
    for (int i=0;i<300;i++){       // Initialize a buffer for received data
      linea[i]=' ';
    }
@@ -48,7 +41,6 @@ void setup()
  
 void loop()
 {
-  gps.listen();
    if (gps.available()>0)
    {
       byteGPS = gps.read();
@@ -137,18 +129,15 @@ void loop()
            }
            Serial.println("");
          }
-           int bruj = brujula();
+           int truelat1 = 40.45;
+           int truelon1 = 3.73;
+           int velocity1 = 150;
            char *buff = (char*)malloc(6);
            char *buff1 = (char*)malloc(6);
            char *buff2 = (char*)malloc(6);
-           char *buff3 = (char*)malloc(6);
          trama[2] = LongToHex(truelat1,buff);
          trama[3] = LongToHex(truelon1,buff1);
          trama[4] = LongToHex(velocity1,buff2);
-         int x = LongToHex(bruj, buff3);
-
-         trama[5]  = x & 0xff;
-         trama[6] = x >> 8;
          free(buff);
          free(buff1);
          free(buff2);
@@ -158,24 +147,10 @@ void loop()
          Serial.println(trama[2], HEX);
          Serial.println(trama[3], HEX);
          Serial.println(trama[4], HEX);
-         Serial.println(trama[5], HEX);
-         Serial.println(trama[6], HEX);
          Serial.println("---FIN-TRAMA---");
-
-
-
-
-         tramaSal.listen();
-         if(tramaSal.isListening())
-         {
-         Serial.println("Escuchando");
-         int byteS = tramaSal.write(trama[0]);
-           Serial.println(byteS);
-         }
        }
        conta=0;                    // Reset the buffer                 
      }
-     
    }
  }
 }
@@ -206,16 +181,26 @@ double parsearLatitud(const char *latitud)
 float parsearLongitud(const char *longitud)
 {
        double longitudParseada;
+       unsigned char dd[3]; // = "";
+       unsigned char mm[7]; // = "";
+       int p;
        double coordenada;
        int grados;
        double minutos;
+
+       double decimal1, decimal2;
 
        coordenada = atof(longitud);
        grados = (int) floor(coordenada / 100);
        minutos = fmod(coordenada, 100);
        minutos = minutos / 60;
        longitudParseada = grados + minutos;
-       
+
+       //decimal2 = (float) decimal2 / 60;
+
+       //decimal1 = (float) decimal1 + decimal2;
+
+       //return decimal1;
        return longitudParseada;
 }
 
@@ -281,12 +266,3 @@ int LongToHex(long int number, unsigned char *res)
     }
     return strtol(res, NULL, 16);
 }
-
-int brujula()
-{
-   int bearing;
- bearing  = cmps03.read();
-  bearing = bearing /10;
- delay(1000);
- return bearing;
- }
